@@ -129,7 +129,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         long currTimeStampSec = new Date().getTime() / 1000;
 
         //If the access token is expired or within 5 minutes of becoming expired, refresh it
-        if (!StringHelper.isBlank(cachedResult.accessToken()) && cachedResult.expiresOn() < (currTimeStampSec - ACCESS_TOKEN_EXPIRE_BUFFER_IN_SEC)) {
+        if (!StringHelper.isBlank(cachedResult.accessToken()) && cachedResult.expiresOn() < (currTimeStampSec + ACCESS_TOKEN_EXPIRE_BUFFER_IN_SEC)) {
             setCacheTelemetry(CacheTelemetry.REFRESH_ACCESS_TOKEN_EXPIRED.telemetryValue);
             log.debug("Refreshing access token because it is expired.");
             return true;
