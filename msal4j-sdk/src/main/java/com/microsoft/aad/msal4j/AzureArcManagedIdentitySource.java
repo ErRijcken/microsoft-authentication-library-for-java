@@ -14,8 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 
 class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
 
@@ -26,6 +25,7 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
     private static final String LINUX_PATH = "/var/opt/azcmagent/tokens/";
     private static final String FILE_EXTENSION = ".key";
     private static final int MAX_FILE_SIZE_BYTES = 4096;
+    private static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
 
     private final URI MSI_ENDPOINT;
 
@@ -92,20 +92,20 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
             ManagedIdentityParameters parameters,
             IHttpResponse response) {
 
-        LOG.info("[Managed Identity] Response received. Status code: {response.StatusCode}");
+        LOG.info("[Managed Identity] Response received. Status code: {}", response.statusCode());
 
         if (response.statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-            if(!response.headers().containsKey("WWW-Authenticate")) {
-                LOG.error("[Managed Identity] WWW-Authenticate header is expected but not found.");
-                throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_NO_CHALLENGE_ERROR, MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
-                        ManagedIdentitySourceType.AZURE_ARC);
-            }
-
-            String challenge = response.headers().get("WWW-Authenticate").get(0);
+            String challenge =
+                    readChallengeFrom(response)
+                            .orElseGet(() -> {
+                                LOG.error("[Managed Identity] {} is expected but not found.", WWW_AUTHENTICATE_HEADER);
+                                throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_NO_CHALLENGE_ERROR, MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
+                                        ManagedIdentitySourceType.AZURE_ARC);
+                            });
             String[] splitChallenge = challenge.split("=");
 
             if (splitChallenge.length != 2) {
-                LOG.error("[Managed Identity] The WWW-Authenticate header for Azure arc managed identity is not an expected format.");
+                LOG.error("[Managed Identity] The {} header for Azure arc managed identity is not an expected format.", WWW_AUTHENTICATE_HEADER);
                 throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_INVALID_CHALLENGE, MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
                         ManagedIdentitySourceType.AZURE_ARC);
             }
@@ -150,6 +150,16 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
         return super.handleResponse(parameters, response);
     }
 
+    private Optional<String> readChallengeFrom(IHttpResponse response) {
+        return response.headers()
+                .entrySet()
+                .stream()
+                .filter(entry -> WWW_AUTHENTICATE_HEADER.equalsIgnoreCase(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .flatMap(Collection::stream)
+                .findFirst();
+    }
+
     private void validateFile(Path path) {
         String osName = System.getProperty("os.name").toLowerCase();
         if (!(osName.contains("windows") || osName.contains("linux"))) {
@@ -170,7 +180,7 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
                     ManagedIdentitySourceType.AZURE_ARC);
         }
 
-        LOG.error("[Managed Identity] Path passed validation.");
+        LOG.info("[Managed Identity] Path passed validation.");
     }
 
     private boolean isValidWindowsPath(Path path) {
