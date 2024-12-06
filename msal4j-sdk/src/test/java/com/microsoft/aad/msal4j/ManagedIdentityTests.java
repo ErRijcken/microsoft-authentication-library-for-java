@@ -4,29 +4,29 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.util.URLUtils;
-import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.SocketException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import static com.microsoft.aad.msal4j.ManagedIdentitySourceType.*;
+import static com.microsoft.aad.msal4j.MsalError.*;
+import static com.microsoft.aad.msal4j.MsalErrorMessage.*;
+import static java.util.Collections.*;
+import static org.apache.http.HttpStatus.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -77,8 +77,8 @@ class ManagedIdentityTests {
             case APP_SERVICE: {
                 endpoint = appServiceEndpoint;
 
-                queryParameters.put("api-version", Collections.singletonList("2019-08-01"));
-                queryParameters.put("resource", Collections.singletonList(resource));
+                queryParameters.put("api-version", singletonList("2019-08-01"));
+                queryParameters.put("resource", singletonList(resource));
 
                 headers.put("X-IDENTITY-HEADER", "secret");
                 break;
@@ -89,43 +89,43 @@ class ManagedIdentityTests {
                 headers.put("ContentType", "application/x-www-form-urlencoded");
                 headers.put("Metadata", "true");
 
-                bodyParameters.put("resource", Collections.singletonList(resource));
+                bodyParameters.put("resource", singletonList(resource));
 
-                queryParameters.put("resource", Collections.singletonList(resource));
+                queryParameters.put("resource", singletonList(resource));
                 return new HttpRequest(HttpMethod.GET, computeUri(endpoint, queryParameters), headers, URLUtils.serializeParameters(bodyParameters));
             }
             case IMDS: {
                 endpoint = IMDS_ENDPOINT;
-                queryParameters.put("api-version", Collections.singletonList("2018-02-01"));
-                queryParameters.put("resource", Collections.singletonList(resource));
+                queryParameters.put("api-version", singletonList("2018-02-01"));
+                queryParameters.put("resource", singletonList(resource));
                 headers.put("Metadata", "true");
                 break;
             }
             case AZURE_ARC: {
                 endpoint = azureArcEndpoint;
 
-                queryParameters.put("api-version", Collections.singletonList("2019-11-01"));
-                queryParameters.put("resource", Collections.singletonList(resource));
+                queryParameters.put("api-version", singletonList("2019-11-01"));
+                queryParameters.put("resource", singletonList(resource));
 
                 headers.put("Metadata", "true");
                 break;
             }
             case SERVICE_FABRIC:
                 endpoint = serviceFabricEndpoint;
-                queryParameters.put("api-version", Collections.singletonList("2019-07-01-preview"));
-                queryParameters.put("resource", Collections.singletonList(resource));
+                queryParameters.put("api-version", singletonList("2019-07-01-preview"));
+                queryParameters.put("resource", singletonList(resource));
                 break;
         }
 
         switch (id.getIdType()) {
             case CLIENT_ID:
-                queryParameters.put("client_id", Collections.singletonList(id.getUserAssignedId()));
+                queryParameters.put("client_id", singletonList(id.getUserAssignedId()));
                 break;
             case RESOURCE_ID:
-                queryParameters.put("mi_res_id", Collections.singletonList(id.getUserAssignedId()));
+                queryParameters.put("mi_res_id", singletonList(id.getUserAssignedId()));
                 break;
             case OBJECT_ID:
-                queryParameters.put("object_id", Collections.singletonList(id.getUserAssignedId()));
+                queryParameters.put("object_id", singletonList(id.getUserAssignedId()));
                 break;
         }
 
@@ -511,43 +511,6 @@ class ManagedIdentityTests {
         verify(httpClientMock, times(1)).send(any());
     }
 
-    @Test
-    void azureArcManagedIdentity_MissingAuthHeader() throws Exception {
-        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AZURE_ARC, azureArcEndpoint);
-        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
-
-        HttpResponse response = new HttpResponse();
-        response.statusCode(HttpStatus.SC_UNAUTHORIZED);
-
-        when(httpClientMock.send(any())).thenReturn(response);
-
-        miApp = ManagedIdentityApplication
-                .builder(ManagedIdentityId.systemAssigned())
-                .httpClient(httpClientMock)
-                .build();
-
-        // Clear caching to avoid cross test pollution.
-        miApp.tokenCache().accessTokens.clear();
-
-        try {
-            miApp.acquireTokenForManagedIdentity(
-                    ManagedIdentityParameters.builder(resource)
-                            .build()).get();
-        } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalServiceException);
-
-            MsalServiceException miException = (MsalServiceException) exception.getCause();
-            assertEquals(ManagedIdentitySourceType.AZURE_ARC.name(), miException.managedIdentitySource());
-            assertEquals(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
-            assertEquals(MsalErrorMessage.MANAGED_IDENTITY_NO_CHALLENGE_ERROR, miException.getMessage());
-            return;
-        }
-
-        fail("MsalServiceException is expected but not thrown.");
-        verify(httpClientMock, times(1)).send(any());
-    }
-
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataError")
     void managedIdentity_SharedCache(ManagedIdentitySourceType source, String endpoint) throws Exception {
@@ -589,81 +552,85 @@ class ManagedIdentityTests {
         verify(httpClientMock, times(1)).send(any());
     }
 
-    @Test
-    void azureArcManagedIdentity_InvalidAuthHeader() throws Exception {
-        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AZURE_ARC, azureArcEndpoint);
-        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+    @Nested
+    class AzureArc {
 
-        HttpResponse response = new HttpResponse();
-        response.statusCode(HttpStatus.SC_UNAUTHORIZED);
-        response.headers().put("WWW-Authenticate", Collections.singletonList("xyz"));
+        @Test
+        void missingAuthHeader() throws Exception {
+            mockHttpResponse(emptyMap());
 
-        when(httpClientMock.send(any())).thenReturn(response);
-
-        miApp = ManagedIdentityApplication
-                .builder(ManagedIdentityId.systemAssigned())
-                .httpClient(httpClientMock)
-                .build();
-
-        // Clear caching to avoid cross test pollution.
-        miApp.tokenCache().accessTokens.clear();
-
-        try {
-            miApp.acquireTokenForManagedIdentity(
-                    ManagedIdentityParameters.builder(resource)
-                            .build()).get();
-        } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalServiceException);
-
-            MsalServiceException miException = (MsalServiceException) exception.getCause();
-            assertEquals(ManagedIdentitySourceType.AZURE_ARC.name(), miException.managedIdentitySource());
-            assertEquals(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
-            assertEquals(MsalErrorMessage.MANAGED_IDENTITY_INVALID_CHALLENGE, miException.getMessage());
-            return;
+            assertMsalServiceException(MANAGED_IDENTITY_REQUEST_FAILED, MANAGED_IDENTITY_NO_CHALLENGE_ERROR);
         }
 
-        fail("MsalServiceException is expected but not thrown.");
-        verify(httpClientMock, times(1)).send(any());
-    }
+        @ParameterizedTest
+        @ValueSource(strings = {"WWW-Authenticate", "Www-Authenticate"})
+        void invalidAuthHeader(String authHeaderKey) throws Exception {
+            mockHttpResponse(singletonMap(authHeaderKey, singletonList("xyz")));
 
-    @Test
-    void azureArcManagedIdentityAuthheaderValidationTest() throws Exception {
-        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AZURE_ARC, azureArcEndpoint);
-        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+            assertMsalServiceException(MANAGED_IDENTITY_REQUEST_FAILED,
+                    MANAGED_IDENTITY_INVALID_CHALLENGE);
+        }
 
-        //Both a missing file and an invalid path structure should throw an exception
-        Path validPathWithMissingFile = Paths.get(System.getenv("ProgramData")+ "/AzureConnectedMachineAgent/Tokens/secret.key");
-        Path invalidPathWithRealFile = Paths.get(this.getClass().getResource("/msi-azure-arc-secret.txt").toURI());
+        @ParameterizedTest
+        @ValueSource(strings = {"WWW-Authenticate", "Www-Authenticate"})
+        void validPathWithMissingFile(String authHeaderKey)
+                throws Exception {
+            Path validPathWithMissingFile = Paths.get(
+                    System.getenv("ProgramData") + "/AzureConnectedMachineAgent/Tokens/secret.key");
 
-        // Mock 401 response that returns WWW-Authenticate header
-        HttpResponse response = new HttpResponse();
-        response.statusCode(HttpStatus.SC_UNAUTHORIZED);
-        response.headers().put("WWW-Authenticate", Collections.singletonList("Basic realm=" + validPathWithMissingFile));
+            mockHttpResponse(singletonMap(authHeaderKey, singletonList("Basic realm=" + validPathWithMissingFile)));
 
-        when(httpClientMock.send(expectedRequest(ManagedIdentitySourceType.AZURE_ARC, resource))).thenReturn(response);
+            assertMsalServiceException(MANAGED_IDENTITY_FILE_READ_ERROR,
+                    MANAGED_IDENTITY_INVALID_FILEPATH);
+        }
 
-        miApp = ManagedIdentityApplication
-                .builder(ManagedIdentityId.systemAssigned())
-                .httpClient(httpClientMock)
-                .build();
+        @ParameterizedTest
+        @ValueSource(strings = {"WWW-Authenticate", "Www-Authenticate"})
+        void invalidPathWithRealFile(String authHeaderKey)
+                throws Exception {
+            Path invalidPathWithRealFile = Paths.get(
+                    this.getClass().getResource("/msi-azure-arc-secret.txt").toURI());
 
-        // Clear caching to avoid cross test pollution.
-        miApp.tokenCache().accessTokens.clear();
+            mockHttpResponse(singletonMap(authHeaderKey, singletonList("Basic realm=" + invalidPathWithRealFile)));
 
-        CompletableFuture<IAuthenticationResult> future = miApp.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(resource).build());
+            assertMsalServiceException(MANAGED_IDENTITY_FILE_READ_ERROR,
+                    MANAGED_IDENTITY_INVALID_FILEPATH);
+        }
 
-        ExecutionException ex = assertThrows(ExecutionException.class, future::get);
-        assertTrue(ex.getCause() instanceof MsalServiceException);
-        assertTrue(ex.getMessage().contains(MsalErrorMessage.MANAGED_IDENTITY_INVALID_FILEPATH));
+        private void mockHttpResponse(Map<String, ? extends List<String>> responseHeaders) throws Exception {
+            IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(AZURE_ARC, azureArcEndpoint);
+            ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+            DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        response.headers().put("WWW-Authenticate", Collections.singletonList("Basic realm=" + invalidPathWithRealFile));
+            HttpResponse response = new HttpResponse();
+            response.statusCode(SC_UNAUTHORIZED);
+            response.headers().putAll(responseHeaders);
 
-        future = miApp.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(resource).build());
+            when(httpClientMock.send(
+                    expectedRequest(AZURE_ARC, resource))).thenReturn(
+                    response);
 
-        ex = assertThrows(ExecutionException.class, future::get);
-        assertTrue(ex.getCause() instanceof MsalServiceException);
-        assertTrue(ex.getMessage().contains(MsalErrorMessage.MANAGED_IDENTITY_INVALID_FILEPATH));
+            miApp = ManagedIdentityApplication
+                    .builder(ManagedIdentityId.systemAssigned())
+                    .httpClient(httpClientMock)
+                    .build();
+
+            // Clear caching to avoid cross test pollution.
+            miApp.tokenCache().accessTokens.clear();
+        }
+
+        private void assertMsalServiceException(String errorCode, String message) throws Exception {
+            CompletableFuture<IAuthenticationResult> future =
+                    miApp.acquireTokenForManagedIdentity(
+                            ManagedIdentityParameters.builder(resource).build());
+
+            ExecutionException ex = assertThrows(ExecutionException.class, future::get);
+            assertInstanceOf(MsalServiceException.class, ex.getCause());
+            MsalServiceException msalException = (MsalServiceException) ex.getCause();
+            assertEquals(AZURE_ARC.name(),
+                    msalException.managedIdentitySource());
+            assertEquals(errorCode, msalException.errorCode());
+            assertTrue(ex.getMessage().contains(message));
+        }
     }
 }
