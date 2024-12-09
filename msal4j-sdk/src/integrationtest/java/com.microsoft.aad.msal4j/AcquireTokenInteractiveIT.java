@@ -108,7 +108,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @Test
     void acquireTokenInteractive_Ciam() {
-        User user = labUserProvider.getCiamUser();
+        User user = labUserProvider.getCiamCudUser();
 
         Map<String, String> extraQueryParameters = new HashMap<>();
 

@@ -26,6 +26,7 @@ class AcquireTokenByOnBehalfOfSupplier extends AuthenticationResultSupplier {
                 SilentParameters parameters = SilentParameters
                         .builder(this.onBehalfOfRequest.parameters.scopes())
                         .claims(this.onBehalfOfRequest.parameters.claims())
+                        .tenant(this.onBehalfOfRequest.parameters.tenant())
                         .build();
 
                 RequestContext context = new RequestContext(

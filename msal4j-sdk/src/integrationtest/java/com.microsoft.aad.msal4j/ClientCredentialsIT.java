@@ -48,7 +48,6 @@ class ClientCredentialsIT {
     void acquireTokenClientCredentials_ClientSecret() throws Exception {
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
         final String clientId = appProvider.getLabVaultAppId();
-        final String password = appProvider.getLabVaultPassword();
         IClientCredential credential = CertificateHelper.getClientCertificate();
 
         assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
@@ -68,7 +67,7 @@ class ClientCredentialsIT {
     @Test
     void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
 
-        User user = labUserProvider.getCiamUser();
+        User user = labUserProvider.getCiamCudUser();
         String clientId = user.getAppId();
 
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.CIAM);

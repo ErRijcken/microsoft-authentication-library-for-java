@@ -105,14 +105,6 @@ public class LabUserProvider {
         return getLabUser(query);
     }
 
-    public User getCiamUser() {
-
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.CIAM);
-
-        return getLabUser(query);
-    }
-
     public User getCiamCudUser() {
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.CIAMCUD);

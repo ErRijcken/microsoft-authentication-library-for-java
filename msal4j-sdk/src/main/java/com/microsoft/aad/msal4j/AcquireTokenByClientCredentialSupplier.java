@@ -26,6 +26,7 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
                 SilentParameters parameters = SilentParameters
                         .builder(this.clientCredentialRequest.parameters.scopes())
                         .claims(this.clientCredentialRequest.parameters.claims())
+                        .tenant(this.clientCredentialRequest.parameters.tenant())
                         .build();
 
                 RequestContext context = new RequestContext(

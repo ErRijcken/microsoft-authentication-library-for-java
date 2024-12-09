@@ -94,7 +94,7 @@ class UsernamePasswordIT {
 
         Map<String, String> extraQueryParameters = new HashMap<>();
 
-        User user = labUserProvider.getCiamUser();
+        User user = labUserProvider.getCiamCudUser();
         PublicClientApplication pca = PublicClientApplication.builder(user.getAppId())
                 .authority("https://" + user.getLabName() + ".ciamlogin.com/")
                 .build();
