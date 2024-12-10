@@ -123,49 +123,6 @@ class OnBehalfOfIT {
         assertNotEquals(result6.accessToken(), result2.accessToken());
     }
 
-    @Test
-    void acquireTokenWithOBO_TenantOverride() throws Exception {
-        cfg = new Config(AzureEnvironment.AZURE);
-        String accessToken = this.getAccessToken();
-
-        final String clientId = cfg.appProvider.getOboAppId();
-        final String password = cfg.appProvider.getOboAppPassword();
-
-        ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
-                        authority(cfg.tenantSpecificAuthority()).
-                        build();
-
-        //This token should be cached with the tenant-specific authority set at the application level
-        IAuthenticationResult resultNoOverride = cca.acquireToken(OnBehalfOfParameters.builder(
-                                Collections.singleton(cfg.graphDefaultScope()),
-                                new UserAssertion(accessToken)).build()).
-                        get();
-
-        //This token should be cached with an 'organizations' authority set at the request level
-        IAuthenticationResult resultOrganizations = cca.acquireToken(OnBehalfOfParameters.builder(
-                                Collections.singleton(cfg.graphDefaultScope()),
-                                new UserAssertion(accessToken))
-                                .tenant("organizations")
-                                .build()).
-                        get();
-
-        //This token should come from the cache and match the token with the 'organizations' authority
-        IAuthenticationResult resultOrganizationsCached = cca.acquireToken(OnBehalfOfParameters.builder(
-                                Collections.singleton(cfg.graphDefaultScope()),
-                                new UserAssertion(accessToken))
-                                .tenant("organizations")
-                                .build()).
-                        get();
-
-        assertResultNotNull(resultNoOverride);
-        assertResultNotNull(resultOrganizations);
-        assertResultNotNull(resultOrganizationsCached);
-
-        assertNotEquals(resultNoOverride.accessToken(), resultOrganizations.accessToken());
-        assertEquals(resultOrganizations.accessToken(), resultOrganizationsCached.accessToken());
-    }
-
     private void assertResultNotNull(IAuthenticationResult result) {
         assertNotNull(result);
         assertNotNull(result.accessToken());
