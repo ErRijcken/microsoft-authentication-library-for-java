@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
@@ -19,8 +20,8 @@ import static org.mockito.Mockito.times;
 @ExtendWith(MockitoExtension.class)
 class OnBehalfOfTests {
 
-    private String getSuccessfulResponse() {
-        return "{\"access_token\":\"accessToken\",\"expires_in\": \""+ 60*60*1000 +"\",\"token_type\":" +
+    private String getSuccessfulResponse(String accessToken) {
+        return "{\"access_token\":\""+accessToken+"\",\"expires_in\": \""+ 60*60*1000 +"\",\"token_type\":" +
                 "\"Bearer\",\"client_id\":\"client_id\",\"Content-Type\":\"text/html; charset=utf-8\"}";
     }
 
@@ -40,7 +41,7 @@ class OnBehalfOfTests {
     void OnBehalfOf_InternalCacheLookup_Success() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(expectedResponse(200, getSuccessfulResponse()));
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(expectedResponse(200, getSuccessfulResponse("token")));
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
@@ -64,8 +65,6 @@ class OnBehalfOfTests {
     void OnBehalfOf_TenantOverride() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(expectedResponse(200, getSuccessfulResponse()));
-
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
                         .authority("https://login.microsoftonline.com/tenant")
@@ -74,17 +73,23 @@ class OnBehalfOfTests {
                         .httpClient(httpClientMock)
                         .build();
 
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(expectedResponse(200, getSuccessfulResponse("appTenantToken")));
         OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedToken)).build();
-        //The two acquireToken calls have the same parameters and should only cause one call from the HTTP client
 
+        //The two acquireToken calls have the same parameters and should only cause one call from the HTTP client
+        IAuthenticationResult resultAppLevelTenant = cca.acquireToken(parameters).get();
         cca.acquireToken(parameters).get();
-        cca.acquireToken(parameters).get();
+        assertEquals(1, cca.tokenCache.accessTokens.size());
         verify(httpClientMock, times(1)).send(any());
 
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(expectedResponse(200, getSuccessfulResponse("requestTenantToken")));
         parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedToken)).tenant("otherTenant").build();
+
         //Overriding the tenant parameter in the request should lead to a new token call being made, but followup calls should not
+        IAuthenticationResult resultRequestLevelTenant = cca.acquireToken(parameters).get();
         cca.acquireToken(parameters).get();
-        cca.acquireToken(parameters).get();
+        assertEquals(2, cca.tokenCache.accessTokens.size());
         verify(httpClientMock, times(2)).send(any());
+        assertNotEquals(resultAppLevelTenant.accessToken(), resultRequestLevelTenant.accessToken());
     }
 }
