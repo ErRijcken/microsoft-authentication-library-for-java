@@ -20,9 +20,9 @@ class IntegrationTestHelper {
         }
     }
 
-    static void assertTokenResultNotNull(IAuthenticationResult result, boolean checkAccessToken, boolean checkIDToken) {
+    static void assertAccessAndIdTokensNotNull(IAuthenticationResult result) {
         assertNotNull(result);
-        if (checkAccessToken) assertNotNull(result.accessToken());
-        if (checkIDToken) assertNotNull(result.idToken());
+        assertNotNull(result.accessToken());
+        assertNotNull(result.idToken());
     }
 }

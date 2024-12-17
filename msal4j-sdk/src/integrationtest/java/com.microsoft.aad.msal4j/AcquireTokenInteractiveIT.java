@@ -145,7 +145,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
     }
 
@@ -157,7 +157,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
                 pca,
                 scope);
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
     }
 
@@ -174,7 +174,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         }
 
         IAuthenticationResult result = acquireTokenInteractive(user, pca, user.getAppId());
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     private void assertAcquireTokenInstanceAware(User user) {
@@ -182,7 +182,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
         IAuthenticationResult result = acquireTokenInteractive_instanceAware(user, pca, cfg.graphDefaultScope());
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
 
         //This test is using a client app with the login.microsoftonline.com config to get tokens for a login.microsoftonline.us user,
@@ -236,7 +236,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
                 build();
 
         IAuthenticationResult result = acquireTokenInteractive(user, publicCloudPca, TestConstants.USER_READ_SCOPE);
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getHomeUPN(), result.account().username());
 
         publicCloudPca.removeAccount(publicCloudPca.getAccounts().join().iterator().next()).join();

@@ -106,7 +106,7 @@ class UsernamePasswordIT {
                         .build())
                 .get();
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     private void assertAcquireTokenCommon(User user, String authority, String scope, String appId)
@@ -125,7 +125,7 @@ class UsernamePasswordIT {
 
                 .get();
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
     }
 
@@ -148,7 +148,7 @@ class UsernamePasswordIT {
                 .build())
                 .get();
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
         SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account);
@@ -158,7 +158,7 @@ class UsernamePasswordIT {
                         .build())
                 .get();
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     @Test
@@ -180,7 +180,7 @@ class UsernamePasswordIT {
                 .build())
                 .get();
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
         SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account);
@@ -190,6 +190,6 @@ class UsernamePasswordIT {
                         .build())
                 .get();
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 }

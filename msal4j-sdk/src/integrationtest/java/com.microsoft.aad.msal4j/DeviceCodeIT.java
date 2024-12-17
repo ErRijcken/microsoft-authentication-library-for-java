@@ -50,7 +50,7 @@ class DeviceCodeIT {
                 .build())
                 .get();
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     @Test()
@@ -73,7 +73,7 @@ class DeviceCodeIT {
                 .build())
                 .get();
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     @Test()

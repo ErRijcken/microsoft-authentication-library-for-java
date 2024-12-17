@@ -113,7 +113,7 @@ class AuthorizationCodeIT extends SeleniumTest {
                         .build())
                 .get();
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
 
         IAuthenticationResult resultSilent = pca.acquireTokenSilently(SilentParameters
@@ -121,7 +121,7 @@ class AuthorizationCodeIT extends SeleniumTest {
                         .build())
                 .get();
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(resultSilent.accessToken(), result.accessToken());
         assertEquals(resultSilent.account().username(), result.account().username());
     }
@@ -143,7 +143,7 @@ class AuthorizationCodeIT extends SeleniumTest {
                 authCode,
                 Collections.singleton(TestConstants.ADFS_SCOPE));
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
     }
 
@@ -157,7 +157,7 @@ class AuthorizationCodeIT extends SeleniumTest {
                 authCode,
                 Collections.singleton(cfg.graphDefaultScope()));
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
     }
 
@@ -180,7 +180,7 @@ class AuthorizationCodeIT extends SeleniumTest {
         String authCode = acquireAuthorizationCodeAutomated(user, cca, null);
         IAuthenticationResult result = acquireTokenInteractiveB2C(cca, authCode);
 
-        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     private IAuthenticationResult acquireTokenAuthorizationCodeFlow(
