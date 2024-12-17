@@ -13,6 +13,7 @@ import lombok.experimental.Accessors;
 public class Config {
     private String organizationsAuthority;
     private String tenantSpecificAuthority;
+    private String commonAuthority;
     private String graphDefaultScope;
     AppCredentialProvider appProvider;
     private String tenant;
@@ -25,6 +26,7 @@ public class Config {
         switch (azureEnvironment) {
             case AzureEnvironment.AZURE:
                 organizationsAuthority = TestConstants.ORGANIZATIONS_AUTHORITY;
+                commonAuthority = TestConstants.COMMON_AUTHORITY;
                 tenantSpecificAuthority = TestConstants.TENANT_SPECIFIC_AUTHORITY;
                 graphDefaultScope = TestConstants.GRAPH_DEFAULT_SCOPE;
                 appProvider = new AppCredentialProvider(azureEnvironment);
@@ -33,6 +35,7 @@ public class Config {
             case AzureEnvironment.AZURE_US_GOVERNMENT:
                 organizationsAuthority = TestConstants.ARLINGTON_ORGANIZATIONS_AUTHORITY;
                 tenantSpecificAuthority = TestConstants.ARLINGTON_TENANT_SPECIFIC_AUTHORITY;
+                commonAuthority = TestConstants.ARLINGTON_COMMON_AUTHORITY;
                 graphDefaultScope = TestConstants.ARLINGTON_GRAPH_DEFAULT_SCOPE;
                 appProvider = new AppCredentialProvider(azureEnvironment);
                 tenant = TestConstants.ARLINGTON_AUTHORITY_TENANT;

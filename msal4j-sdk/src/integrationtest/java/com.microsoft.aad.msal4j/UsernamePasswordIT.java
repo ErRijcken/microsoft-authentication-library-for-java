@@ -91,14 +91,12 @@ class UsernamePasswordIT {
 
     @Test
     void acquireTokenWithUsernamePassword_Ciam() throws Exception {
-
         Map<String, String> extraQueryParameters = new HashMap<>();
 
-        User user = labUserProvider.getCiamUser();
+        User user = labUserProvider.getCiamCudUser();
         PublicClientApplication pca = PublicClientApplication.builder(user.getAppId())
                 .authority("https://" + user.getLabName() + ".ciamlogin.com/")
                 .build();
-
 
         IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
                         builder(Collections.singleton(TestConstants.USER_READ_SCOPE),
@@ -108,12 +106,7 @@ class UsernamePasswordIT {
                         .build())
                 .get();
 
-        assertNotNull(result.accessToken());
-    }
-
-    private void assertAcquireTokenCommonAAD(User user) throws Exception {
-        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(),
-                user.getAppId());
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     private void assertAcquireTokenCommon(User user, String authority, String scope, String appId)
@@ -132,7 +125,7 @@ class UsernamePasswordIT {
 
                 .get();
 
-        assertTokenResultNotNull(result);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
     }
 
@@ -155,7 +148,7 @@ class UsernamePasswordIT {
                 .build())
                 .get();
 
-        assertTokenResultNotNull(result);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
         SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account);
@@ -165,7 +158,7 @@ class UsernamePasswordIT {
                         .build())
                 .get();
 
-        assertTokenResultNotNull(result);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     @Test
@@ -187,7 +180,7 @@ class UsernamePasswordIT {
                 .build())
                 .get();
 
-        assertTokenResultNotNull(result);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
         SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account);
@@ -197,12 +190,6 @@ class UsernamePasswordIT {
                         .build())
                 .get();
 
-        assertTokenResultNotNull(result);
-    }
-
-    private void assertTokenResultNotNull(IAuthenticationResult result) {
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-        assertNotNull(result.idToken());
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 }
