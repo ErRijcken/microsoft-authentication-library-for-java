@@ -65,10 +65,6 @@ public class LabUserProvider {
         return getLabUser(query);
     }
 
-    public User getB2cUser(String b2cProvider) {
-        return getB2cUser(AzureEnvironment.AZURE, b2cProvider);
-    }
-
     public User getB2cUser(String azureEnvironment, String b2cProvider) {
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, azureEnvironment);

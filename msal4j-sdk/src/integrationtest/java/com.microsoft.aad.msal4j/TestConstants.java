@@ -3,10 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 public class TestConstants {
     public final static String KEYVAULT_DEFAULT_SCOPE = "https://vault.azure.net/.default";
     public final static String MSIDLAB_DEFAULT_SCOPE = "https://request.msidlab.com/.default";
@@ -34,15 +30,9 @@ public class TestConstants {
     public final static String TENANT_SPECIFIC_AUTHORITY = MICROSOFT_AUTHORITY_HOST + MICROSOFT_AUTHORITY_TENANT;
     public final static String REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS = "westus.login.microsoft.com";
 
-    public final static String REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_EASTUS = "eastus.login.microsoft.com";
-
-//    public final static String CIAM_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "msidlabciam1.onmicrosoft.com";
-    public final static String CIAM_AUTHORITY = "https://msidlabciam1.ciamlogin.com/" + "msidlabciam1.onmicrosoft.com";
-
-    public final static String CIAM_TEST_AUTHORITY = "https://contoso0781.ciamlogin.com/6babcaad-604b-40ac-a9d7-9fd97c0b779f/v2.0/.well-known/openid-configuration?dc=ESTS-PUB-EUS-AZ1-FD000-TEST1&ciamhost=true";
-
     public final static String ARLINGTON_ORGANIZATIONS_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + "organizations/";
     public final static String ARLINGTON_TENANT_SPECIFIC_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + ARLINGTON_AUTHORITY_TENANT;
+    public final static String ARLINGTON_COMMON_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + "common/";
     public final static String ARLINGTON_GRAPH_DEFAULT_SCOPE = "https://graph.microsoft.us/.default";
 
     public final static String B2C_AUTHORITY = "https://msidlabb2c.b2clogin.com/msidlabb2c.onmicrosoft.com/";
@@ -63,9 +53,5 @@ public class TestConstants {
     public final static String ADFS_SCOPE = USER_READ_SCOPE;
     public final static String ADFS_APP_ID = "PublicClientId";
 
-    public final static String CLAIMS = "{\"id_token\":{\"auth_time\":{\"essential\":true}}}";
-    public final static Set<String> CLIENT_CAPABILITIES_EMPTY = new HashSet<>(Collections.emptySet());
     public final static String AUTHORITY_PUBLIC_TENANT_SPECIFIC = "https://login.microsoftonline.com/" + MICROSOFT_AUTHORITY_TENANT;
-
-    public final static String DEFAULT_ACCESS_TOKEN = "defaultAccessToken";
 }

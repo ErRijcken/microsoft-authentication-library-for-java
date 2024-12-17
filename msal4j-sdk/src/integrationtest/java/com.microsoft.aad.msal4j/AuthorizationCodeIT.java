@@ -14,7 +14,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -114,9 +113,7 @@ class AuthorizationCodeIT extends SeleniumTest {
                         .build())
                 .get();
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-        assertNotNull(result.idToken());
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
 
         IAuthenticationResult resultSilent = pca.acquireTokenSilently(SilentParameters
@@ -124,7 +121,7 @@ class AuthorizationCodeIT extends SeleniumTest {
                         .build())
                 .get();
 
-        assertNotNull(resultSilent);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(resultSilent.accessToken(), result.accessToken());
         assertEquals(resultSilent.account().username(), result.account().username());
     }
@@ -146,28 +143,13 @@ class AuthorizationCodeIT extends SeleniumTest {
                 authCode,
                 Collections.singleton(TestConstants.ADFS_SCOPE));
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-        assertNotNull(result.idToken());
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
     }
 
     private void assertAcquireTokenAAD(User user, Map<String, Set<String>> parameters) {
 
-        PublicClientApplication pca;
-        Set<String> clientCapabilities = null;
-        if (parameters != null) {
-            clientCapabilities = parameters.getOrDefault("clientCapabilities", null);
-        }
-        try {
-            pca = PublicClientApplication.builder(
-                    user.getAppId()).
-                    authority(cfg.organizationsAuthority()).
-                    clientCapabilities(clientCapabilities).
-                    build();
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), cfg.commonAuthority());
 
         String authCode = acquireAuthorizationCodeAutomated(user, pca, parameters);
         IAuthenticationResult result = acquireTokenAuthorizationCodeFlow(
@@ -175,9 +157,7 @@ class AuthorizationCodeIT extends SeleniumTest {
                 authCode,
                 Collections.singleton(cfg.graphDefaultScope()));
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-        assertNotNull(result.idToken());
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
     }
 
@@ -200,9 +180,7 @@ class AuthorizationCodeIT extends SeleniumTest {
         String authCode = acquireAuthorizationCodeAutomated(user, cca, null);
         IAuthenticationResult result = acquireTokenInteractiveB2C(cca, authCode);
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-        assertNotNull(result.idToken());
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     private IAuthenticationResult acquireTokenAuthorizationCodeFlow(
