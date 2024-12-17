@@ -52,6 +52,9 @@ public class User {
     @JsonProperty("lastUpdatedDate")
     private String lastUpdatedDate;
 
+    @JsonProperty("tenantID")
+    private String tenantID;
+
     @Setter
     private String password;
 

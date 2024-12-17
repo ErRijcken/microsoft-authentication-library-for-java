@@ -16,7 +16,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.Collections;
 import java.util.function.Consumer;
@@ -41,10 +40,7 @@ class DeviceCodeIT {
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
 
-        PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
-                authority(cfg.tenantSpecificAuthority()).
-                build();
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), cfg.commonAuthority());
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> runAutomatedDeviceCodeFlow(deviceCode, user);
 
@@ -54,8 +50,7 @@ class DeviceCodeIT {
                 .build())
                 .get();
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
+        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
     }
 
     @Test()
@@ -78,8 +73,7 @@ class DeviceCodeIT {
                 .build())
                 .get();
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
+        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
     }
 
     @Test()
@@ -87,10 +81,7 @@ class DeviceCodeIT {
 
         User user = labUserProvider.getMSAUser();
 
-        PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
-                authority(TestConstants.CONSUMERS_AUTHORITY).
-                build();
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), TestConstants.CONSUMERS_AUTHORITY);
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
             runAutomatedDeviceCodeFlow(deviceCode, user);

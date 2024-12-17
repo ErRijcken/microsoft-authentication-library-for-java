@@ -7,7 +7,6 @@ public class AppCredentialProvider {
     private KeyVaultSecretsProvider keyVaultSecretsProvider;
 
     private String labVaultClientId;
-    private String labVaultPassword;
 
     private String clientId;
 
@@ -19,7 +18,6 @@ public class AppCredentialProvider {
         keyVaultSecretsProvider = new KeyVaultSecretsProvider();
 
         labVaultClientId = keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_KEY_VAULT_SECRET);
-        labVaultPassword = keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_KEY_VAULT_SECRET);
 
         switch (azureEnvironment) {
             case AzureEnvironment.AZURE:
@@ -64,9 +62,5 @@ public class AppCredentialProvider {
 
     public String getLabVaultAppId() {
         return labVaultClientId;
-    }
-
-    public String getLabVaultPassword() {
-        return labVaultPassword;
     }
 }

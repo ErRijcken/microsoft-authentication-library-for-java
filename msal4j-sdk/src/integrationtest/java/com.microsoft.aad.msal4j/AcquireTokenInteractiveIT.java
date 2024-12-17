@@ -15,7 +15,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -53,7 +52,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
-        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
+        assertAcquireTokenCommon(user, cfg.commonAuthority(), cfg.graphDefaultScope());
     }
 
     @Test()
@@ -108,7 +107,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @Test
     void acquireTokenInteractive_Ciam() {
-        User user = labUserProvider.getCiamUser();
+        User user = labUserProvider.getCiamCudUser();
 
         Map<String, String> extraQueryParameters = new HashMap<>();
 
@@ -146,27 +145,19 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
 
-        assertTokenResultNotNull(result);
+        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
         assertEquals(user.getUpn(), result.account().username());
     }
 
     private void assertAcquireTokenCommon(User user, String authority, String scope) {
-        PublicClientApplication pca;
-        try {
-            pca = PublicClientApplication.builder(
-                    user.getAppId()).
-                    authority(authority).
-                    build();
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), authority);
 
         IAuthenticationResult result = acquireTokenInteractive(
                 user,
                 pca,
                 scope);
 
-        assertTokenResultNotNull(result);
+        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
         assertEquals(user.getUpn(), result.account().username());
     }
 
@@ -183,23 +174,15 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         }
 
         IAuthenticationResult result = acquireTokenInteractive(user, pca, user.getAppId());
-        assertTokenResultNotNull(result);
+        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
     }
 
     private void assertAcquireTokenInstanceAware(User user) {
-        PublicClientApplication pca;
-        try {
-            pca = PublicClientApplication.builder(
-                    user.getAppId()).
-                    authority(cfg.organizationsAuthority()).
-                    build();
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), TestConstants.MICROSOFT_AUTHORITY_HOST + user.getTenantID());
 
         IAuthenticationResult result = acquireTokenInteractive_instanceAware(user, pca, cfg.graphDefaultScope());
 
-        assertTokenResultNotNull(result);
+        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
         assertEquals(user.getUpn(), result.account().username());
 
         //This test is using a client app with the login.microsoftonline.com config to get tokens for a login.microsoftonline.us user,
@@ -253,7 +236,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
                 build();
 
         IAuthenticationResult result = acquireTokenInteractive(user, publicCloudPca, TestConstants.USER_READ_SCOPE);
-        assertTokenResultNotNull(result);
+        IntegrationTestHelper.assertTokenResultNotNull(result, true, true);
         assertEquals(user.getHomeUPN(), result.account().username());
 
         publicCloudPca.removeAccount(publicCloudPca.getAccounts().join().iterator().next()).join();
@@ -289,12 +272,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
         return result;
-    }
-
-    private void assertTokenResultNotNull(IAuthenticationResult result) {
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-        assertNotNull(result.idToken());
     }
 
     private IAuthenticationResult acquireTokenInteractive_instanceAware(

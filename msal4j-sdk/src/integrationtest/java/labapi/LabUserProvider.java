@@ -65,10 +65,6 @@ public class LabUserProvider {
         return getLabUser(query);
     }
 
-    public User getB2cUser(String b2cProvider) {
-        return getB2cUser(AzureEnvironment.AZURE, b2cProvider);
-    }
-
     public User getB2cUser(String azureEnvironment, String b2cProvider) {
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, azureEnvironment);
@@ -101,14 +97,6 @@ public class LabUserProvider {
         query.parameters.put(UserQueryParameters.HOME_AZURE_ENVIRONMENT, homeEnvironment);
         query.parameters.put(UserQueryParameters.GUEST_HOME_DIN, "hostazuread");
         query.parameters.put(UserQueryParameters.SIGN_IN_AUDIENCE, "azureadmyorg");
-
-        return getLabUser(query);
-    }
-
-    public User getCiamUser() {
-
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.CIAM);
 
         return getLabUser(query);
     }
