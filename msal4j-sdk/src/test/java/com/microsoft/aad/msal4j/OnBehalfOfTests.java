@@ -20,28 +20,11 @@ import static org.mockito.Mockito.times;
 @ExtendWith(MockitoExtension.class)
 class OnBehalfOfTests {
 
-    private String getSuccessfulResponse(String accessToken) {
-        return "{\"access_token\":\""+accessToken+"\",\"expires_in\": \""+ 60*60*1000 +"\",\"token_type\":" +
-                "\"Bearer\",\"client_id\":\"client_id\",\"Content-Type\":\"text/html; charset=utf-8\"}";
-    }
-
-    private HttpResponse expectedResponse(int statusCode, String response) {
-        Map<String, List<String>> headers = new HashMap<String, List<String>>();
-        headers.put("Content-Type", Collections.singletonList("application/json"));
-
-        HttpResponse httpResponse = new HttpResponse();
-        httpResponse.statusCode(statusCode);
-        httpResponse.body(response);
-        httpResponse.addHeaders(headers);
-
-        return httpResponse;
-    }
-
     @Test
     void OnBehalfOf_InternalCacheLookup_Success() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(expectedResponse(200, getSuccessfulResponse("token")));
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
@@ -51,7 +34,7 @@ class OnBehalfOfTests {
                         .httpClient(httpClientMock)
                         .build();
 
-        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedToken)).build();
+        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedAssertion)).build();
 
         IAuthenticationResult result = cca.acquireToken(parameters).get();
         IAuthenticationResult result2 = cca.acquireToken(parameters).get();
@@ -73,23 +56,32 @@ class OnBehalfOfTests {
                         .httpClient(httpClientMock)
                         .build();
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(expectedResponse(200, getSuccessfulResponse("appTenantToken")));
-        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedToken)).build();
+        HashMap<String, String> tokenResponseValues = new HashMap<>();
+        tokenResponseValues.put("access_token", "accessTokenFirstCall");
 
-        //The two acquireToken calls have the same parameters and should only cause one call from the HTTP client
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
+        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedAssertion)).build();
+
+        //The two acquireToken calls have the same parameters...
         IAuthenticationResult resultAppLevelTenant = cca.acquireToken(parameters).get();
-        cca.acquireToken(parameters).get();
+        IAuthenticationResult resultAppLevelTenantCached = cca.acquireToken(parameters).get();
+        //...so only one token should be added to the cache, and the mocked HTTP client's "send" method should only have been called once
         assertEquals(1, cca.tokenCache.accessTokens.size());
+        assertEquals(resultAppLevelTenant.accessToken(), resultAppLevelTenantCached.accessToken());
         verify(httpClientMock, times(1)).send(any());
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(expectedResponse(200, getSuccessfulResponse("requestTenantToken")));
-        parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedToken)).tenant("otherTenant").build();
+        tokenResponseValues.put("access_token", "accessTokenSecondCall");
 
-        //Overriding the tenant parameter in the request should lead to a new token call being made, but followup calls should not
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
+        parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedAssertion)).tenant("otherTenant").build();
+
+        //Overriding the tenant parameter in the request should lead to a new token call being made...
         IAuthenticationResult resultRequestLevelTenant = cca.acquireToken(parameters).get();
-        cca.acquireToken(parameters).get();
+        IAuthenticationResult resultRequestLevelTenantCached = cca.acquireToken(parameters).get();
+        //...which should be different from the original token, and thus the cache should have two tokens created from two HTTP calls
         assertEquals(2, cca.tokenCache.accessTokens.size());
-        verify(httpClientMock, times(2)).send(any());
+        assertEquals(resultRequestLevelTenant.accessToken(), resultRequestLevelTenantCached.accessToken());
         assertNotEquals(resultAppLevelTenant.accessToken(), resultRequestLevelTenant.accessToken());
+        verify(httpClientMock, times(2)).send(any());
     }
 }
