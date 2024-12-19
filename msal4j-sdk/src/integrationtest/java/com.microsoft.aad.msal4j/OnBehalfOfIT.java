@@ -39,8 +39,7 @@ class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
+        assertResultNotNull(result);
     }
 
     @ParameterizedTest
@@ -63,8 +62,7 @@ class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        assertNotNull(result1);
-        assertNotNull(result1.accessToken());
+        assertResultNotNull(result1);
 
         // Same scope and userAssertion, should return cached tokens
         IAuthenticationResult result2 =
@@ -82,8 +80,7 @@ class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        assertNotNull(result3);
-        assertNotNull(result3.accessToken());
+        assertResultNotNull(result3);
         assertNotEquals(result2.accessToken(), result3.accessToken());
 
         // Scope 2, should return cached token
@@ -105,8 +102,7 @@ class OnBehalfOfIT {
                                 .build()).
                         get();
 
-        assertNotNull(result5);
-        assertNotNull(result5.accessToken());
+        assertResultNotNull(result5);
         assertNotEquals(result5.accessToken(), result4.accessToken());
         assertNotEquals(result5.accessToken(), result2.accessToken());
 
@@ -121,11 +117,15 @@ class OnBehalfOfIT {
                                 .build()).
                         get();
 
-        assertNotNull(result6);
-        assertNotNull(result6.accessToken());
+        assertResultNotNull(result6);
         assertNotEquals(result6.accessToken(), result5.accessToken());
         assertNotEquals(result6.accessToken(), result4.accessToken());
         assertNotEquals(result6.accessToken(), result2.accessToken());
+    }
+
+    private void assertResultNotNull(IAuthenticationResult result) {
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
     }
 
     private String getAccessToken() throws Exception {

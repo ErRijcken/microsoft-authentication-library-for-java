@@ -7,41 +7,18 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ClientCredentialTest {
-
-    @Test
-    void testAssertionNullAndEmpty() {
-        assertThrows(NullPointerException.class, () ->
-                new ClientAssertion(""));
-
-        assertThrows(NullPointerException.class, () ->
-                new ClientAssertion(null));
-    }
-
-    @Test
-    void testSecretNullAndEmpty() {
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                new ClientSecret(""));
-
-        assertTrue(ex.getMessage().contains("clientSecret is null or empty"));
-
-        assertThrows(IllegalArgumentException.class, () ->
-                new ClientSecret(null));
-
-        assertTrue(ex.getMessage().contains("clientSecret is null or empty"));
-    }
+@ExtendWith(MockitoExtension.class)
+class OnBehalfOfTests {
 
     @Test
     void OnBehalfOf_InternalCacheLookup_Success() throws Exception {
@@ -51,13 +28,13 @@ class ClientCredentialTest {
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
-                        .authority("https://login.microsoftonline.com/tenant/")
+                                .authority("https://login.microsoftonline.com/tenant/")
                         .instanceDiscovery(false)
                         .validateAuthority(false)
                         .httpClient(httpClientMock)
                         .build();
 
-        ClientCredentialParameters parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).build();
+        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedAssertion)).build();
 
         IAuthenticationResult result = cca.acquireToken(parameters).get();
         IAuthenticationResult result2 = cca.acquireToken(parameters).get();
@@ -83,7 +60,7 @@ class ClientCredentialTest {
         tokenResponseValues.put("access_token", "accessTokenFirstCall");
 
         when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
-        ClientCredentialParameters parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).build();
+        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedAssertion)).build();
 
         //The two acquireToken calls have the same parameters...
         IAuthenticationResult resultAppLevelTenant = cca.acquireToken(parameters).get();
@@ -96,7 +73,7 @@ class ClientCredentialTest {
         tokenResponseValues.put("access_token", "accessTokenSecondCall");
 
         when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
-        parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).tenant("otherTenant").build();
+        parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedAssertion)).tenant("otherTenant").build();
 
         //Overriding the tenant parameter in the request should lead to a new token call being made...
         IAuthenticationResult resultRequestLevelTenant = cca.acquireToken(parameters).get();
