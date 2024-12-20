@@ -1,3 +1,9 @@
+Version 1.18.0
+=============
+- Fix WWW-Authenticate formatting in MI scenarios (#885)
+- Fix tenant override not being used in OBO and credential flows (#886)
+- Bump jackson-databind dependency (#887)
+
 Version 1.17.3
 =============
 - Correctly set buffer for expired tokens (#875)
